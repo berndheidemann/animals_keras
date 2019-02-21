@@ -28,6 +28,7 @@ for j in range( columns*rows ):
     i=np.random.randint(0, x_test.shape[0])
     image = x_test[i]+127
     title= classes[np.argmax(preds[i],axis=0)]
+    print(preds[i])
     ax.append( fig.add_subplot(rows, columns, j+1) )
     ax[-1].set_title(title)
     plt.imshow(image.astype('uint8'))
