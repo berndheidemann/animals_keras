@@ -1,18 +1,13 @@
-import keras
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, BatchNormalization, Activation, AveragePooling2D
-from keras.layers import Conv2D, MaxPooling2D
-from keras.preprocessing.image import ImageDataGenerator
-from keras import backend as K
-from smallvggnet import SmallVGGNet
+from keras.applications.imagenet_utils import preprocess_input
 from keras.callbacks import ModelCheckpoint
-from keras.applications.imagenet_utils import preprocess_input
-import os
-from keras.preprocessing import image
-import numpy as np
-from keras.applications.imagenet_utils import preprocess_input
+from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Dense, Dropout, Flatten, BatchNormalization, Activation, AveragePooling2D
+from keras.models import Sequential
+from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import to_categorical
+
 from PlotLoss import PlotLosses
+from dataLoader import loadSet
 
 image_size=96
 batch_size = 100
@@ -35,28 +30,6 @@ def getMyModel():
         model.add(Dense(num_classes, activation='softmax', name='sm'))
         return model
 
-def loadSet(dataset):
-        classes=["cats", "dogs", "panda"]
-
-        nb_samples=0
-        files=[]
-        for i,cls in enumerate(classes):
-                files.append(os.listdir("animals/"+dataset+"/"+cls))
-                nb_samples+=len(files[i])
-        x_train=np.zeros((nb_samples, image_size, image_size, 3))
-        y_train=np.zeros((nb_samples))
-
-        c=0
-        for j,cls in enumerate(classes):
-                for file in files[j]:
-                        img = image.load_img("./animals/" + dataset + "/" + cls + "/" + file, target_size=(image_size, image_size, 3))
-                        x = image.img_to_array(img)
-                        x = preprocess_input(x)
-                        x_train[c]=x
-                        y_train[c]=j
-                        c+=1
-
-        return (x_train, y_train)
 
 (x_train, y_train)=loadSet("train")
 (x_test, y_test)=loadSet("test")
@@ -85,10 +58,10 @@ model.compile(loss='categorical_crossentropy',
 checkpoint = ModelCheckpoint('./saves/model-{epoch:02d}-{acc:.4f}.h5', verbose=1, monitor='val_acc',save_best_only=True, mode='auto')
 
 model.fit_generator(
-        train_datagen.flow(x_train, y_train, batch_size=batch_size),
+        train_datagen.flow(x_train, y_train, batch_size=batch_size, shuffle=True),
         steps_per_epoch=20000 // batch_size,
         epochs=epochs,
-        validation_data=test_datagen.flow(x_test, y_test, batch_size=50),
+        validation_data=test_datagen.flow(x_test, y_test, batch_size=50, shuffle=True),
         callbacks=[checkpoint, PlotLosses(slowlyCutBeginning=False)],
         validation_steps=800 // batch_size)
 model.save('myNet.h5')  # always save your weights after training or during training
